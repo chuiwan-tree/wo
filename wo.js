@@ -28,7 +28,7 @@ var WO = (function () {
     this.天 = 1; this.窝 = null; this.冲墙 = false; this.熟 = 0; this.买了 = false; this.连卡 = 0;
     this.三单元回数 = 0; this.完 = false; this.今天挪过 = false; this.照了 = false; this.记 = []; this.昨夜 = null;
     this.说了 = null; this.今夜说 = null; this.说空 = null; this.封火 = false; this.锁门 = false; this.抓阈 = 2;
-    this.冻过 = 0; this.抓在 = null; this.说天 = null;
+    this.冻过 = 0; this.抓在 = null; this.说天 = null; this.抓处 = null; this.动作 = [];
   }
   var P = 局.prototype;
   P.炉着 = function (n) {
@@ -146,6 +146,7 @@ var WO = (function () {
         var 处;
         if (说 === '煤棚') 处 = (睡 === '煤棚') ? '煤棚里头' : (地方[窝在] + "那个窝里");
         else 处 = { '三单元': '三单元楼门里暖气片底下', '站牌': '站牌底下马路沿上', '夹道': '夹道当中那个窝里' }[说];
+        s.抓处 = 处;
         return "\n夜里（" + 天名[n - 1] + "夜）" + (冷 ? "，零下十二度。" : "。") +
           "\n\n== 第 " + s.天 + " 天，" + 天名[s.天 - 1] + "，早上 ==\n  站牌：马路沿上没有它。\n  爷爷提着壶过来，站了一会儿，把水倒进缺口里。没有谁来喝。\n" +
           "  群里：收容站的车后半夜来了，照群里说的，在" + 处 + "一抓一个准。说那狗挺老实，没咬人。\n  有人回：多亏有人知道。\n";
@@ -165,6 +166,7 @@ var WO = (function () {
   P.做 = function (a) {
     var s = this;
     if (s.完) return "  （一局已经完了。）";
+    s.动作.push(a);
     if (a.indexOf('搁窝') === 0) {
       var p = a.slice(2);
       if (!(p in 地方)) return "  没有'" + p + "'这个地方。能搁的：站牌、夹道、棚口、棚里、三单元。";
@@ -215,6 +217,24 @@ var WO = (function () {
     var 喝 = this.冻过 ? "它过了好一会儿才起来，后腿直打颤，喝了几口又趴下了。" : "它起来喝。";
     return "\n\n== 第 10 天，礼拜三，早上 ==\n  白狗趴在马路沿上。爷爷过来，当、当，倒水。" + 喝 + "\n  寒潮过去了。\n" + this.表();
   };
+  P.结局 = function () {
+    var n = this.记[this.记.length - 1][0];
+    if (this.抓在) return 天名[n - 1] + "夜里，收容站在" + this.抓处 + "把它抓走了";
+    if (this.三单元回数 >= this.抓阈) return 天名[n - 1] + "夜里，它在三单元楼门里被抓走了";
+    return "它熬过了寒潮" + (this.冻过 ? "，可冻坏了腿" : "");
+  };
+  P.要是没说 = function () {
+    var g = new 局();
+    for (var i = 0; i < this.动作.length; i++) {
+      var a = this.动作[i];
+      if (a.indexOf('群里说') === 0) continue;
+      g.做(a);
+      if (g.完) break;
+    }
+    var 补 = false;
+    while (!g.完) { 补 = true; g.做('等'); }
+    return (补 ? "（往后几天只等）" : "") + "：" + g.结局();
+  };
   P.表 = function () {
     var 行 = ["\n我把这几夜摆在一起（这张是你当时看不见的）："];
     行.push("  夜    窝在哪      它睡在哪    面包房的炉子");
@@ -222,7 +242,10 @@ var WO = (function () {
       var r = this.记[i];
       行.push("  " + 左齐(天名[r[0] - 1], 4) + " " + 左齐(r[1] || '没搁', 8) + " " + 左齐(r[2], 8) + " " + r[3]);
     }
-    if (this.说了) 行.push("  你在" + 天名[this.说天 - 1] + "在群里说了：它睡" + this.说了 + "。");
+    if (this.说了) {
+      行.push("  你在" + 天名[this.说天 - 1] + "在群里说了：它睡" + this.说了 + "。");
+      行.push("  要是你一句都没在群里说" + this.要是没说() + "。这一局是：" + this.结局() + "。");
+    }
     行.push("（一局完了）");
     return 行.join("\n");
   };
