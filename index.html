@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>窝</title>
+<style>
+  body { margin: 0; background: #f3efe6; color: #2b2622; font-family: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; }
+  #wrap { max-width: 760px; margin: 0 auto; padding: 24px 18px 220px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 14px; letter-spacing: 4px; }
+  #log { white-space: pre-wrap; line-height: 1.75; font-size: 16px; }
+  #log .act { color: #8a5a2b; }
+  #log .new { animation: fade 0.6s ease-in; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  #bar { position: fixed; left: 0; right: 0; bottom: 0; background: #e8e1d3; border-top: 1px solid #cfc5b2; padding: 10px 12px 12px; }
+  #bar .row { max-width: 760px; margin: 0 auto 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  #bar .lab { font-size: 14px; color: #6b5f52; margin-right: 4px; min-width: 52px; }
+  button { font: inherit; font-size: 15px; padding: 5px 11px; border: 1px solid #b9ad98; background: #fbf8f2; border-radius: 4px; cursor: pointer; color: #2b2622; }
+  button:hover { background: #fff; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button.wait { background: #4b4036; color: #f3efe6; border-color: #4b4036; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>窝</h1>
+  <div id="log"></div>
+</div>
+<div id="bar">
+  <div class="row"><span class="lab">搁窝</span>
+    <button data-a="搁窝站牌">站牌</button><button data-a="搁窝夹道">夹道</button><button data-a="搁窝棚口">棚口</button><button data-a="搁窝棚里">棚里</button><button data-a="搁窝三单元">三单元</button>
+    <button data-a="收窝">收窝</button>
+  </div>
+  <div class="row"><span class="lab">群里说</span>
+    <button data-a="群里说站牌">站牌</button><button data-a="群里说夹道">夹道</button><button data-a="群里说煤棚">煤棚</button><button data-a="群里说三单元">三单元</button>
+  </div>
+  <div class="row"><span class="lab"></span>
+    <button data-a="夜里去看">夜里去看</button>
+    <button data-a="等" class="wait">等（过一夜）</button>
+    <button id="again" style="display:none">再来一局</button>
+  </div>
+</div>
+<script src="wo.js"></script>
+<script>
+(function () {
+  var logEl = document.getElementById('log');
+  var game, shown;
+  function add(text, cls) {
+    var span = document.createElement('span');
+    span.textContent = text;
+    span.className = 'new' + (cls ? ' ' + cls : '');
+    logEl.appendChild(span);
+  }
+  function setDone(done) {
+    var bs = document.querySelectorAll('#bar button[data-a]');
+    for (var i = 0; i < bs.length; i++) bs[i].disabled = done;
+    document.getElementById('again').style.display = done ? '' : 'none';
+  }
+  function start() {
+    logEl.textContent = '';
+    game = new WO.局();
+    add(WO.开头() + '\n' + game.早上() + '\n\n' + WO.动作说明() + '\n');
+    setDone(false);
+    window.scrollTo(0, 0);
+  }
+  function act(a) {
+    if (game.完) return;
+    add('\n> ' + a + '\n', 'act');
+    add(game.做(a) + '\n');
+    if (game.完) setDone(true);
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+  var bs = document.querySelectorAll('#bar button[data-a]');
+  for (var i = 0; i < bs.length; i++) {
+    bs[i].addEventListener('click', function () { act(this.getAttribute('data-a')); });
+  }
+  document.getElementById('again').addEventListener('click', start);
+  start();
+})();
+</script>
+</body>
+</html>
